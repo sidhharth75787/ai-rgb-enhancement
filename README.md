@@ -41,3 +41,9 @@ X. Guo, Y. Li, H. Ling, “LIME: Low-Light Image Enhancement via Illumination Ma
 
 ## Dependencies
 Python 3.10–3.13 recommended; install from requirements.txt. First launch can take longer because the AI model is trained locally. No dedicated GPU needed.
+
+
+## Updated AI classifier (Google Colab)
+The app loads `random_forest_3class.joblib` from the project directory. It does not retrain on startup. Features exactly match Colab: resize to 128x128, OpenCV grayscale, mean, std, fraction below 64, fraction above 192, and 10th/50th/90th percentiles. Labels: 0 Low-light, 1 Normal, 2 Overexposed. The model was trained using scikit-learn 1.6.1; keep this version for model compatibility.
+
+Three-class scene-separated validation accuracy: 97.25% (283/291), including synthetic overexposure. Real-world three-class test performance and probability calibration are not established. A 100% confidence display is not a guarantee of correctness. Never load untrusted `.joblib` files.

@@ -10,7 +10,7 @@ from ai_model import predict
 
 st.set_page_config(page_title='AI RGB Enhancement Studio',page_icon='🌙',layout='wide')
 st.title('🌙 AI-Based Low-Light RGB Image Enhancement Studio')
-st.caption('SPA mini project | Adjustable parameters • Image enhancement • Demo ML classifier • Quality comparison')
+st.caption('SPA mini project | Adjustable parameters • Image enhancement • Trained Random Forest • Quality comparison')
 with st.sidebar:
     st.header('Processing controls')
     method=st.selectbox('Enhancement algorithm',['Gamma correction','CLAHE','Illumination-inspired'])
@@ -35,12 +35,20 @@ except Exception as e:
     st.stop()
 
 if ai or auto:
-    with st.spinner('Loading demonstration ML classifier...'):
-        label,confidence=predict(original)
+    with st.spinner('Loading trained Random Forest model...'):
+        try:
+            label,confidence,class_probabilities=predict(original)
+        except Exception as exc:
+            st.error(f'AI model could not be loaded: {exc}')
+            st.stop()
     st.write(f'**AI exposure category:** {label} (model confidence {confidence:.0%})')
-    st.caption('Demo classifier trained on synthetic exposure variations of a few example images. Confidence is not clinical or production reliability.')
+    st.caption('Random Forest trained on LOL paired images and synthetically overexposed images. Validation accuracy: 97.25% on a scene-separated split; real-world reliability and probability calibration are not established.')
+    with st.expander('Exposure probabilities'):
+        for category, probability in class_probabilities.items():
+            st.write(f'{category}: {probability:.1%}')
+            st.progress(probability)
     if auto:
-        method={'Low light':'Illumination-inspired','Normal':'CLAHE','Overexposed':'Gamma correction'}[label]
+        method={'Low-light':'Illumination-inspired','Normal':'CLAHE','Overexposed':'Gamma correction'}[label]
         if label=='Overexposed': gamma=0.7
         st.info(f'AI selected: {method}' + (' with gamma 0.7' if label=='Overexposed' else ''))
 
@@ -77,4 +85,4 @@ with st.expander('RGB channel views'):
         a.image(original[:,:,i],caption=f'Original {name}',clamp=True,use_container_width=True)
         b.image(enhanced[:,:,i],caption=f'Enhanced {name}',clamp=True,use_container_width=True)
 with st.expander('Project methodology and limitations'):
-    st.markdown('''**Research inspiration:** Guo et al., *LIME: Low-Light Image Enhancement via Illumination Map Estimation* (IEEE TIP, 2017). DOI: 10.1109/TIP.2016.2639450.\n\nThis app implements **a simplified illumination-map-inspired correction**, not the complete LIME algorithm. Gamma and CLAHE are baselines. The AI classifier uses a small synthetic training set and has not been validated on real exposure datasets. For a research report, evaluate with independent test images and, where possible, paired ground-truth reference images.''')
+    st.markdown('''**Research inspiration:** Guo et al., *LIME: Low-Light Image Enhancement via Illumination Map Estimation* (IEEE TIP, 2017). DOI: 10.1109/TIP.2016.2639450.\n\nThis app implements **a simplified illumination-map-inspired correction**, not the complete LIME algorithm. Gamma and CLAHE are baselines. The exposure classifier uses a Random Forest trained on 485 paired LOL scenes (low/normal) and synthetically overexposed variants. Scene-separated validation accuracy was 97.25% (283/291); the separate LOL eval15 set was tested only for the earlier two-class model. Real-world three-class accuracy and probability calibration remain unverified. Evaluate with independent real-world photographs and, where possible, paired reference images.''')
